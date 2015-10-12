@@ -48,8 +48,10 @@ class UI(Form, Base):
         currentItems = [self.listWidget.item(i).text() for i in range(self.listWidget.count())]
         if self.getIdMode() == obj_id_text:
             currentItems.extend(utils.getSelectedMeshes())
+            utils.addMeshesToSet(currentItems)
         else:
             currentItems.extend(redshift.getSelectedMtls())
+            redshift.addMtlsToSet(currentItems)
         currentItems = list(set(currentItems))
         self.listWidget.clear()
         self.listWidget.addItems(currentItems)

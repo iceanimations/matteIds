@@ -7,6 +7,7 @@ import pymel.core as pc
 import utilities as utils
 
 #mtls = ['RedshiftArchitectural']
+matteIdsMaterialsSetName = 'matte_ids_materials'
 
 def getAOVs(obj=False, mtl=False):
     return [aov for aov in pc.ls(type='RedshiftAOV')
@@ -32,18 +33,26 @@ def getMtlsFromAOV(aov):
     mtls = {}
     for aovId in ['redId', 'greenId', 'blueId']:
         mtls[aovId] = []
-        for mesh in utils.getMeshes():
+        for mtl in getMtls():
+            mtlId = mtl.outColor.outputs()[0].rsMaterialId.get()
+            if mtlId > 0 and mtlId == pc.getAttr('.'.join([aov.name(), aovId])):
+                    mtls[aovId].append(mtl.name())
+    return mtls
+
+def getMtlsFromMeshes(meshes):
+    mtls = []
+    for mesh in meshes:
             shape = mesh.getShape(ni=True)
             if shape:
                 for sg in set(pc.listConnections(shape, type=pc.nt.ShadingEngine)):
-                    mtlId = sg.rsMaterialId.get()
-                    if mtlId > 0 and mtlId == pc.getAttr('.'.join([aov.name(), aovId])):
-                        for mtl in sg.surfaceShader.inputs():
-                            mtls[aovId].append(mtl.name())
+                    for mtl in sg.surfaceShader.inputs():
+                        mtls.append(mtl.name())
     return mtls
 
 def getSelectedMtls():
-    return pc.ls(sl=True, type=pc.nt.RedshiftArchitectural)
+    mtls = pc.ls(sl=True, type=pc.nt.RedshiftArchitectural)
+    mtls.extend(getMtlsFromMeshes([mesh.firstParent() for mesh in pc.ls(sl=True, type='mesh', dag=True)]))
+    return mtls
 
 def getUnassignedMeshes():
     meshes = []
@@ -54,19 +63,18 @@ def getUnassignedMeshes():
 
 def getUnassignedMaterials():
     mtls = []
-    ids = []
-    for aov in getAOVs(mtl=True):
-        ids.append(aov.redId.get())
-        ids.append(aov.greenId.get())
-        ids.append(aov.blueId.get())
-    for mesh in utils.getMeshes():
-        shape = mesh.getShape(ni=True)
-        if shape:
-            for sg in set(pc.listConnections(shape, type=pc.nt.ShadingEngine)):
-                if sg.rsMaterialId.get() == 0 or sg.rsMaterialId.get() not in getAOVIds(mtl=True):
-                    for mtl in sg.surfaceShader.inputs():
-                        mtls.append(mtl.name())
+    for mtl in getMtls():
+        mtlId = mtl.outColor.outputs()[0].rsMaterialId.get()
+        if mtlId == 0 or mtlId not in getAOVIds(mtl=True):
+            mtls.append(mtl.name())
     return mtls
+
+def getMtls():
+    mtlSet = pc.ls(matteIdsMaterialsSetName)
+    if mtlSet:
+        return mtlSet[0].members()
+    else:
+        return []
 
 def getAOVIds(**kwargs):
     aovs = getAOVs(**kwargs)
@@ -108,3 +116,13 @@ def addMtlId(aov, mtl, col):
         attr.set(getLowestUniqueId(mtl=True))
     for sg in mtl.outColor.outputs():
         sg.rsMaterialId.set(attr.get())
+        
+def addMtlsToSet(mtls):
+    mtlSet = pc.ls(matteIdsMaterialsSetName)
+    if mtlSet:
+        pc.sets(mtlSet[0], e=True, fe=mtls)
+    else:
+        sl = pc.ls(sl=True)
+        pc.select(mtls)
+        pc.sets(name=matteIdsMaterialsSetName)
+        pc.select(sl)
