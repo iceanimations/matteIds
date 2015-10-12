@@ -54,7 +54,9 @@ class UI(Form, Base):
             redshift.addMtlsToSet(currentItems)
         currentItems = list(set(currentItems))
         self.listWidget.clear()
+        print currentItems
         self.listWidget.addItems(currentItems)
+        self.populate()
         
     def switchView(self):
         text = self.switchButton.text()
