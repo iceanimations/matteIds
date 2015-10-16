@@ -50,7 +50,7 @@ def getMtlsFromMeshes(meshes):
     return mtls
 
 def getSelectedMtls():
-    mtls = [mtl.name() for mtl in pc.ls(sl=True, type=pc.nt.RedshiftArchitectural)]
+    mtls = [mtl.name() for mtl in pc.ls(sl=True, type=[pc.nt.RedshiftArchitectural, pc.nt.RedshiftMaterialBlender])]
     mtls.extend(getMtlsFromMeshes([mesh.firstParent() for mesh in pc.ls(sl=True, type='mesh', dag=True)]))
     return mtls
 
