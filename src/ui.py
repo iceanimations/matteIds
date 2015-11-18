@@ -32,6 +32,7 @@ select_objs_text = 'Select Objects'
 select_mtls_text = 'Select Materials'
 select_mtls_on_obj_text = 'Select Materials On Object'
 select_objs_with_mtl_text = 'Select Objects With Material'
+remove_text = 'Remove'
 
 Form, Base = uic.loadUiType(osp.join(ui_path, 'ui.ui'))
 class UI(Form, Base):
@@ -51,6 +52,8 @@ class UI(Form, Base):
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(select_mtls_on_obj_text)
         self.contextMenu.addAction(select_objs_with_mtl_text)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(remove_text)
         
         self.populate()
         map(lambda action: action.triggered.connect(lambda checked: self.handleActionClick(action.text())), self.contextMenu.actions())
@@ -85,8 +88,11 @@ class UI(Form, Base):
             utils.selectObjs(items)
         elif actionText == select_mtls_on_obj_text:
             utils.selectMtlsOnObj(items)
-        else:
+        elif actionText == select_objs_with_mtl_text:
             utils.selectObjsWithMtl(items)
+        elif actionText == remove_text:
+            utils.removeFromSet(items, self.getIdMode())
+            self.populate()
         
     def addSelection(self):
         currentItems = [self.listWidget.item(i).text() for i in range(self.listWidget.count())]

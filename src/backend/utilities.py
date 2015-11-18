@@ -5,10 +5,13 @@ Created on Sep 8, 2015
 '''
 import pymel.core as pc
 
-matteIdsObjectsSetName = 'matte_ids_objects'
+object_set_name = 'matte_ids_objects'
+material_set_name = 'matte_ids_materials'
+obj_id_text = 'Object IDs'
+mtl_id_text = 'Material IDs'
 
 def getMeshes():
-    chars = pc.ls(matteIdsObjectsSetName)
+    chars = pc.ls(object_set_name)
     if chars:
         return [x for x in chars[0].members() if type(x) == pc.nt.Transform and x.getShapes(ni=True)]
     else: return []
@@ -18,13 +21,13 @@ def getSelectedMeshes():
     return [obj.firstParent().name() for obj in sl]
 
 def addMeshesToSet(meshes):
-    objSet = pc.ls(matteIdsObjectsSetName)
+    objSet = pc.ls(object_set_name)
     if objSet:
         pc.sets(objSet[0], e=True, fe=meshes)
     else:
         sl = pc.ls(sl=True)
         pc.select(meshes)
-        pc.sets(name=matteIdsObjectsSetName)
+        pc.sets(name=object_set_name)
         pc.select(sl)
 
 def selectObjs(objs):
@@ -48,3 +51,10 @@ def selectMtlsOnObj(objs):
             for mtl in sg.surfaceShader.inputs():
                 mtls.append(mtl)
     pc.select(mtls)
+    
+def removeFromSet(objs, idMode):
+    if idMode == obj_id_text:
+        pc.PyNode(object_set_name).removeMembers(objs)
+    else:
+        pc.PyNode(material_set_name).removeMembers(objs)
+        
