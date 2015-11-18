@@ -26,4 +26,25 @@ def addMeshesToSet(meshes):
         pc.select(meshes)
         pc.sets(name=matteIdsObjectsSetName)
         pc.select(sl)
+
+def selectObjs(objs):
+    pc.select(objs)
     
+def selectObjsWithMtl(mtls):
+    mtls = [pc.PyNode(mtl) for mtl in mtls]
+    objs = []
+    for mtl in mtls:
+        for obj in mtl.outColor.outputs():
+            objs.append(obj)
+    pc.select(objs)
+    
+
+def selectMtlsOnObj(objs):
+    objs = [pc.PyNode(obj).getShape(ni=True) for obj in objs]
+    mtls = []
+    for obj in objs:
+        sgs = set(pc.listConnections(obj, type=pc.nt.ShadingEngine))
+        for sg in sgs:
+            for mtl in sg.surfaceShader.inputs():
+                mtls.append(mtl)
+    pc.select(mtls)

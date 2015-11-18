@@ -9,12 +9,16 @@ from PyQt4.QtCore import Qt
 import os.path as osp
 import qtify_maya_window as qtfy
 import appUsageApp
+from argparse import Action
 reload(appUsageApp)
 import msgBox
+import cui
 from backend import utilities as utils
 reload(utils)
 from backend import redshift
+
 reload(redshift)
+reload(cui)
 
 root_path = osp.dirname(osp.dirname(__file__))
 ui_path = osp.join(root_path, 'ui')
@@ -23,6 +27,11 @@ icon_path = osp.join(root_path, 'icons')
 title = 'Matte IDs'
 obj_id_text = 'Object IDs'
 mtl_id_text = 'Material IDs'
+
+select_objs_text = 'Select Objects'
+select_mtls_text = 'Select Materials'
+select_mtls_on_obj_text = 'Select Materials On Object'
+select_objs_with_mtl_text = 'Select Objects With Material'
 
 Form, Base = uic.loadUiType(osp.join(ui_path, 'ui.ui'))
 class UI(Form, Base):
@@ -35,14 +44,49 @@ class UI(Form, Base):
         self.tableWidget.horizontalHeader().setResizeMode(QHeaderView.Stretch) 
         self.listWidgets = []
         
+        self.setStyleSheet(cui.styleSheet)
+        self.contextMenu = QMenu(self)
+        self.contextMenu.addAction(select_objs_text)
+        self.contextMenu.addAction(select_mtls_text)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addAction(select_mtls_on_obj_text)
+        self.contextMenu.addAction(select_objs_with_mtl_text)
+        
         self.populate()
+        map(lambda action: action.triggered.connect(lambda checked: self.handleActionClick(action.text())), self.contextMenu.actions())
         
         self.refreshButton.clicked.connect(self.populate)
         self.tableWidget.dropEvent = self.tableDropEvent
         self.switchButton.clicked.connect(self.switchView)
         self.addButton.clicked.connect(self.addSelection)
+        self.listWidget.contextMenuEvent = self.listWidgetContextMenuEvent
         
         appUsageApp.updateDatabase('matteIds')
+        
+    def listWidgetContextMenuEvent(self, event):
+        if not self.listWidget.selectedItems():
+            return
+        self.contextMenu.popup(QCursor.pos())
+        for action in self.contextMenu.actions():
+            if self.getIdMode() == obj_id_text:
+                if action.text() in ['Select Materials', 'Select Objects With Material']:
+                    action.setEnabled(False)
+                else:
+                    action.setEnabled(True)
+            else:
+                if action.text() in ['Select Objects', 'Select Materials On Object']:
+                    action.setEnabled(False)
+                else:
+                    action.setEnabled(True)
+    
+    def handleActionClick(self, actionText):
+        items = [item.text() for item in self.listWidget.selectedItems()]
+        if actionText in [select_objs_text, select_mtls_text]:
+            utils.selectObjs(items)
+        elif actionText == select_mtls_on_obj_text:
+            utils.selectMtlsOnObj(items)
+        else:
+            utils.selectObjsWithMtl(items)
         
     def addSelection(self):
         currentItems = [self.listWidget.item(i).text() for i in range(self.listWidget.count())]
@@ -145,7 +189,7 @@ class UI(Form, Base):
     
     def insertItem(self, items, row, col):
         widget = QListWidget(self)
-        #widget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        widget.setFocusPolicy(Qt.NoFocus)
         widget.setMaximumHeight(60)
         self.listWidgets.append(widget)
         for text in items:
