@@ -34,7 +34,7 @@ def getMtlsFromAOV(aov):
     for aovId in ['redId', 'greenId', 'blueId']:
         mtls[aovId] = []
         for mtl in getMtls():
-            mtlId = mtl.outColor.outputs()[0].rsMaterialId.get()
+            mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
             if mtlId > 0 and mtlId == pc.getAttr('.'.join([aov.name(), aovId])):
                     mtls[aovId].append(mtl.name())
     return mtls
@@ -65,7 +65,7 @@ def getUnassignedMeshes():
 def getUnassignedMaterials():
     mtls = []
     for mtl in getMtls():
-        mtlId = mtl.outColor.outputs()[0].rsMaterialId.get()
+        mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
         if mtlId == 0 or mtlId not in getAOVIds(mtl=True):
             mtls.append(mtl.name())
     return mtls
@@ -106,7 +106,7 @@ def addObjectId(aov, obj, col):
 
 def removeMtlId(mtl):
     mtl = pc.PyNode(mtl)
-    for sg in mtl.outColor.outputs():
+    for sg in mtl.future(type='shadingEngine'):
         sg.rsMaterialId.set(0)
 
 def addMtlId(aov, mtl, col):
@@ -115,7 +115,7 @@ def addMtlId(aov, mtl, col):
     attr = pc.PyNode('.'.join([aov.name(), colToAttr(col)]))
     if attr.get() == 0:
         attr.set(getLowestUniqueId(mtl=True))
-    for sg in mtl.outColor.outputs():
+    for sg in mtl.future(type='shadingEngine'):
         sg.rsMaterialId.set(attr.get())
         
 def addMtlsToSet(mtls):
