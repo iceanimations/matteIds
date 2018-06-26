@@ -65,7 +65,10 @@ def getUnassignedMeshes():
 def getUnassignedMaterials():
     mtls = []
     for mtl in getMtls():
-        mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
+        try:
+            mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
+        except IndexError:
+            continue
         if mtlId == 0 or mtlId not in getAOVIds(mtl=True):
             mtls.append(mtl.name())
     return mtls
