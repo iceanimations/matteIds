@@ -34,7 +34,10 @@ def getMtlsFromAOV(aov):
     for aovId in ['redId', 'greenId', 'blueId']:
         mtls[aovId] = []
         for mtl in getMtls():
-            mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
+            try:
+                mtlId = mtl.future(type='shadingEngine')[0].rsMaterialId.get()
+            except IndexError:
+                continue
             if mtlId > 0 and mtlId == pc.getAttr('.'.join([aov.name(), aovId])):
                     mtls[aovId].append(mtl.name())
     return mtls
